@@ -27,7 +27,7 @@ countries_selec <- c('FRA','GBR','ITA','ESP','DEU','CHN','JPN','KOR','MEX','USA'
 # source https://data.oecd.org/
 setwd('C:/Users/francois.lafont@ccomptes.fr/Documents/DEV/shiny/coronavirus')
 # oecd_data <- list.files('./','*.csv')
-oecd_data <- Sys.glob('./data/oecd*.xlsx')
+oecd_data <- Sys.glob('./oecd*.xlsx')
 
 read_oecd <- function(x){
 
@@ -62,7 +62,7 @@ df_oecd <- nurses %>%
   left_join(med_doc)
 
 
-wb_data <- Sys.glob('./data/wb*.xlsx')
+wb_data <- Sys.glob('./wb*.xlsx')
 read_wb<- function(x){
   
   read_xlsx(x, col_types = 'text') %>% select(country=1, country_code=2, INDICATOR=3, val2018=`2018`)
