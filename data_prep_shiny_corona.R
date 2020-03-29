@@ -30,7 +30,7 @@ setwd('C:/Users/francois.lafont@ccomptes.fr/Documents/DEV/shiny/coronavirus')
 oecd_data <- Sys.glob('./oecd*.xlsx')
 
 read_oecd <- function(x){
-
+  
   read_xlsx(x) %>% rename(country=1) %>% group_by(country, INDICATOR) %>%
     filter(TIME==max(TIME)) %>% ungroup()  
   #keep only most recent year
@@ -80,8 +80,8 @@ df_wb <- map_df(wb_data,read_wb) %>%
          INDICATOR = case_when(
            INDICATOR=='KOR'~'GDP per capita (current US$)',
            T~as.character(INDICATOR))
-         ) 
-  
+  ) 
+
 wb_indicators <- list()
 
 for (i in df_wb$INDICATOR){
@@ -171,45 +171,39 @@ covid <- covid %>%
 covid_calc <- covid %>% left_join(df_world, by =c('country_abbrv2'='country_code')) %>%
   
   mutate(case_100khab = cum_cases / pop *1e5,
-         death_100khab = cum_deaths/pop*1e5)
+         death_100khab = cum_deaths/pop*1e5,
+         ln_cases= log(cum_cases),
+         ln_deaths = log(cum_deaths)) 
 
-rm(covid_base)
 
-# 
-# ##3) On va lier la base de COVID avec les données OECD
-# covid_oecd <- covid %>%
+covid_over10 <- covid_base %>%
+  group_by(country)%>%
+  
+  mutate(over_10_deaths = cum_deaths>=10) %>%
+  group_by(country,over_10_deaths)%>%
+  mutate(nb_day_since_10deaths = DateRep -min(DateRep)) %>%
+  filter(nb_day_since_10deaths >=1)
+
+
+rm(covid, covid_base)    
+
+########## autre version avec date depuis le 10eme mort 
+# covid_10 <- covid %>%
+#   mutate(country_abbrv2 = case_when(
+#     country=='United_States_of_America'~'USA',
+#     country=='Spain'~'ESP',
+#     country =='United_Kingdom'~'GBR',
+#     country=='Germany'~'DEU',
+#     country=='Japan'~'JPN',
+#     country=='South_Korea'~'KOR',
+#     country=='China'~'CHN',
+#     TRUE~country_abbrv)) %>%
 #   
-#   inner_join(df_all, by = c('country_abbrv2'='country')) %>%
+#   filter(country_abbrv2 %in% countries_selec) %>%
 #   
-#   mutate(Value = case_when (
-#     INDICATOR == 'POP'~Value*1e6,
-#     TRUE~Value)) %>%
-#   
-#   filter(SUBJECT =='TOT') %>%
-#   filter(INDICATOR=='HEALTHEXP'&MEASURE=='PC_GDP'|
-#            INDICATOR %in% c('MEDICALDOC','NURSE')|
-#            INDICATOR =='POP'&MEASURE=='MLN_PER'|
-#            INDICATOR =='GDP'&MEASURE=='USD_CAP') 
-# 
-# 
-# # 4) creation de plusieurs tables
-# 
-# # 
-# # oecd_indicator[['GDP']] <- oecd_indicator[['GDP']] %>%
-# #   add_row(country='China',Value=9770.85)
-# 
-# #5) 
-# covid_oecd <- covid_oecd %>%
-#   
-#   group_by(country) %>% 
-#   mutate(pop = subset(covid_oecd, INDICATOR=='POP', select=Value))
-# 
-# # china_gdp <- read.csv2('./china_data.csv', sep=',', NA=T)
-# # 
-# # 
-# # covid_oecd['INDICATOR']
-# # ### Shiny 
-# # covid_oecd[which(covid_oecd$INDICATOR=='POP')]
-# #covid_oecd$pop <-  subset(covid_oecd, INDICATOR=='POP', select=Value)
-# # 
-# # x <- subset(covid_oecd, INDICATOR=='POP', select=Value)           
+#   group_by(country) %>%
+#   mutate(over_10_deaths = cum_deaths>=10) %>%
+#   group_by(country,over_10_deaths) %>%
+#   mutate(days_since_10deaths=(DateRep- min(DateRep)))
+
+#
